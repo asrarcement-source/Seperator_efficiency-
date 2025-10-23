@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Cement - Separator Analysis</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Chart.js for plotting -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script> <!-- Required for log scale potentially -->
+     <!-- Load jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Custom styles if needed */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+        }
+        @media print {
+            body { margin: 0; padding: 0;}
+            #control-section, #input-section button, #printButton { display: none; }
+            #output-section { margin-top: 0; padding-top: 0; }
+            canvas { max-height: 400px !important; } /* Adjust canvas height for print */
+        }
+        /* Style for required fields */
+        .required::after {
+            content: '*';
+            color: red;
+            margin-left: 2px;
+        }
+        /* Ensure table cells don't shrink too much */
+        td input {
+            min-width: 60px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-blue-100 min-h-screen p-4 md:p-8 text-gray-800">
+    <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-xl p-6 md:p-10">
+
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 border-gray-200">
+            <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                <!-- Secret Cement Logo SVG -->
+                <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
+                     aria-label="Secret Cement Logo" role="img"
+                     class="h-12 md:h-16 w-auto">
+                  <defs>
+                    <linearGradient id="cementGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#7A7A7A"/>
+                      <stop offset="100%" stop-color="#0077B6"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- Cement block gradient -->
+                  <rect x="20" y="20" width="360" height="360" rx="48" fill="url(#cementGradient)"/>
+                  <!-- Interlocking S and C letters -->
+                  <g fill="white" font-family="Inter, Poppins, Arial, sans-serif" font-weight="700">
+                    <text x="150" y="220" font-size="160" text-anchor="middle">S</text>
+                    <text x="250" y="280" font-size="170" text-anchor="middle" opacity="0.9">C</text>
+                  </g>
+                </svg>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-700">Separator Efficiency & Tromp Curve Analysis</h1>
+            </div>
+            <div class="text-sm text-gray-500 text-center md:text-right">
+                Prepared by: Mr. Fadi M. Darwesh<br>
+                QC & R&D Specialist<br>
+                <a href="mailto:asrar.cement@gmail.com" class="text-blue-600 hover:underline">asrar.cement@gmail.com</a>
+            </div>
+        </header>
+
+        <!-- Input Section -->
+        <section id="input-section" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-600">Report & Separator Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <input type="text" id="preparerName" placeholder="Report Preparer Name" value="Mr. Fadi M. Darwesh" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <input type="text" id="companyName" placeholder="Company Name" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <input type="text" id="plantName" placeholder="Plant Name" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <input type="text" id="separatorType" placeholder="Separator Type (e.g., O-Sepa, Sturtevant)" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none required">
+                <input type="text" id="separatorGen" placeholder="Separator Generation (e.g., 1st, 2nd, 3rd/HES)" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                 <input type="text" id="analysisKey" placeholder="External Analysis Key (Optional)" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <input type="date" id="reportDate" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none required">
+            </div>
+
+            <h2 class="text-xl font-semibold mb-4 text-gray-600 required">Particle Size Distribution Data (% Passing)</h2>
+            <div class="overflow-x-auto mb-4">
+                <table id="psdTable" class="w-full border-collapse table-auto">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2 border text-sm required">Sieve Size (µm)</th>
+                            <th class="p-2 border text-sm required">Feed (% Pass)</th>
+                            <th class="p-2 border text-sm required">Fines (% Pass)</th>
+                            <th class="p-2 border text-sm required">Rejects (% Pass)</th>
+                            <th class="p-2 border text-sm">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Initial rows, more can be added -->
+                        <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="1"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="3.6"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="4.9"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="1.9"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                         <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="4"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="11"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="14.7"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="6.3"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="8"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="18.5"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="25.4"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="10.1"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                         <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="16"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="31.2"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="44.9"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="14.4"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                         <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="32"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="47.8"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="71.1"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="19.1"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                         <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="64"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="67.7"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="92.6"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="37.1"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="96"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="81.8"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="100"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="59.5"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                         <tr>
+                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="200"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="95.1"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="100"></td>
+                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="89.0"></td>
+                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="addRow()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow transition duration-150 ease-in-out">Add Data Row</button>
+             <button onclick="loadDemoData()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow transition duration-150 ease-in-out ml-2">Load Demo Data (HES Example)</button>
+        </section>
+
+        <!-- Control Section -->
+        <section id="control-section" class="text-center mb-8">
+            <button onclick="calculateAndAnalyze()" class="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-150 ease-in-out transform hover:scale-105">
+                Calculate & Analyze Separator Performance
+            </button>
+        </section>
+
+        <!-- Message/Error Area -->
+        <div id="messageArea" class="mb-6 text-center text-red-600 font-semibold"></div>
+
+        <!-- Output Section -->
+        <section id="output-section" class="hidden mt-10 border-t pt-8 border-gray-200">
+            <h2 class="text-2xl font-semibold mb-6 text-center text-gray-700">Analysis Results</h2>
+
+            <div id="report-content" class="space-y-8">
+                <!-- Report Details -->
+                <div id="reportDetailsOutput" class="mb-6 p-4 bg-gray-50 rounded-lg border">
+                     <h3 class="text-lg font-semibold mb-2 text-gray-600">Report Information</h3>
+                     <!-- Details will be populated here -->
+                </div>
+
+                <!-- Plot Area -->
+                <div class="mb-8 p-4 bg-gray-50 rounded-lg border shadow">
+                    <h3 class="text-lg font-semibold mb-4 text-center text-gray-600">Tromp Curve</h3>
+                    <div class="relative h-64 md:h-96">
+                        <canvas id="trompChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- KPI Display -->
+                <div class="mb-8 p-4 bg-gray-50 rounded-lg border shadow">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-600">Key Performance Indicators (KPIs)</h3>
+                    <div id="kpiResults" class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm md:text-base">
+                        <!-- KPIs will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Analysis Text -->
+                <div class="p-4 bg-gray-50 rounded-lg border shadow">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-600">Performance Analysis</h3>
+                    <div id="analysisResult" class="prose max-w-none text-gray-700">
+                        <!-- Analysis text will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print Button -->
+            <div class="text-center mt-8">
+                <button id="printButton" onclick="generatePDF()" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-150 ease-in-out transform hover:scale-105">
+                    Print PDF Report
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        let trompChartInstance = null; // To hold the chart instance
+
+        // --- Data Handling ---
+        function addRow() {
+            const table = document.getElementById('psdTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md"></td>
+                <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md"></td>
+                <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md"></td>
+                <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md"></td>
+                <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+            `;
+        }
+
+        function deleteRow(button) {
+            const row = button.parentNode.parentNode;
+            // Prevent deleting the last row if desired, or ensure at least one row remains
+            if (document.getElementById('psdTable').rows.length > 2) { // Check if more than header + 1 data row
+                 row.parentNode.removeChild(row);
+            } else {
+                 displayMessage("Cannot delete the last data row.");
+            }
+        }
+
+        function getInputData() {
+            const table = document.getElementById('psdTable').getElementsByTagName('tbody')[0];
+            const rows = table.rows;
+            const data = [];
+            let isValid = true;
+            let lastSize = -1;
+
+            if (rows.length === 0) {
+                 displayMessage("Please add particle size data rows.");
+                 return null;
+            }
+
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].cells;
+                const sizeInput = cells[0].querySelector('input');
+                const feedInput = cells[1].querySelector('input');
+                const finesInput = cells[2].querySelector('input');
+                const rejectsInput = cells[3].querySelector('input');
+
+                // Clear previous validation styles
+                [sizeInput, feedInput, finesInput, rejectsInput].forEach(input => input.classList.remove('border-red-500'));
+
+                const size = parseFloat(sizeInput.value);
+                const feed = parseFloat(feedInput.value);
+                const fines = parseFloat(finesInput.value);
+                const rejects = parseFloat(rejectsInput.value);
+
+                let rowValid = true;
+                if (isNaN(size) || size <= 0 || size <= lastSize) {
+                    sizeInput.classList.add('border-red-500');
+                    displayMessage(`Invalid or non-increasing sieve size in row ${i + 1}. Size must be > 0 and greater than the previous row.`);
+                    rowValid = false;
+                }
+                if (isNaN(feed) || feed < 0 || feed > 100) { feedInput.classList.add('border-red-500'); rowValid = false; }
+                if (isNaN(fines) || fines < 0 || fines > 100) { finesInput.classList.add('border-red-500'); rowValid = false; }
+                if (isNaN(rejects) || rejects < 0 || rejects > 100) { rejectsInput.classList.add('border-red-500'); rowValid = false; }
+
+                 // Check consistency: Fines% >= Feed% >= Rejects% (for % passing)
+                if (!isNaN(feed) && !isNaN(fines) && !isNaN(rejects) && !(fines >= feed && feed >= rejects)) {
+                     feedInput.classList.add('border-red-500');
+                     finesInput.classList.add('border-red-500');
+                     rejectsInput.classList.add('border-red-500');
+                     displayMessage(`Data inconsistency in row ${i+1}: Expected Fines % >= Feed % >= Rejects % for '% Passing' data.`);
+                     rowValid = false;
+                }
+
+
+                if (!rowValid) {
+                    isValid = false;
+                    // Don't break immediately, highlight all errors
+                } else {
+                    data.push({ size: size, feed: feed, fines: fines, rejects: rejects });
+                    lastSize = size; // Update last valid size
+                }
+            }
+             if (!isValid) {
+                 displayMessage("Please correct the highlighted errors in the data table.");
+                 return null; // Return null if any row had validation errors
+             }
+             if (data.length < 2) {
+                displayM
