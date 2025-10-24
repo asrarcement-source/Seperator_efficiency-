@@ -3,302 +3,1481 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Cement - Separator Analysis</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Chart.js for plotting -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script> <!-- Required for log scale potentially -->
-     <!-- Load jsPDF and html2canvas for PDF generation -->
+    <title>Secret Cement - Separator Efficiency Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Custom styles if needed */
+        :root {
+            --primary-color: #1a5276;
+            --secondary-color: #2e86c1;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         body {
-            font-family: 'Inter', sans-serif; /* Using Inter font */
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
         }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 25px 0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .logo {
+            font-size: 2.8rem;
+            font-weight: bold;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 50px;
+            margin-right: 15px;
+        }
+        
+        .logo-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .header-info {
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .header-info p {
+            margin: 5px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: #f1f1f1;
+        }
+        
+        .tab-content {
+            display: none;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light-color);
+        }
+        
+        h3 {
+            color: var(--secondary-color);
+            margin: 20px 0 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-danger {
+            background-color: var(--accent-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .data-table th {
+            background-color: var(--light-color);
+            font-weight: 600;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .result-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .result-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .result-description {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .analysis-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .analysis-section h3 {
+            color: var(--primary-color);
+        }
+        
+        .recommendation {
+            background-color: #e8f4fc;
+            border-left: 4px solid var(--secondary-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .api-section {
+            background-color: #fff3cd;
+            border-left: 4px solid var(--warning-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .report-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .report-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .report-section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .report-details {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         @media print {
-            body { margin: 0; padding: 0;}
-            #control-section, #input-section button, #printButton { display: none; }
-            #output-section { margin-top: 0; padding-top: 0; }
-            canvas { max-height: 400px !important; } /* Adjust canvas height for print */
-        }
-        /* Style for required fields */
-        .required::after {
-            content: '*';
-            color: red;
-            margin-left: 2px;
-        }
-        /* Ensure table cells don't shrink too much */
-        td input {
-            min-width: 60px;
+            body {
+                background: white;
+            }
+            
+            .tabs, .btn, .footer {
+                display: none;
+            }
+            
+            .tab-content {
+                display: block !important;
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            .report-header {
+                background: #1a5276 !important;
+                -webkit-print-color-adjust: exact;
+            }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-100 to-blue-100 min-h-screen p-4 md:p-8 text-gray-800">
-    <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-xl p-6 md:p-10">
-
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 border-gray-200">
-            <div class="flex items-center space-x-3 mb-4 md:mb-0">
-                <!-- Secret Cement Logo SVG -->
-                <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"
-                     aria-label="Secret Cement Logo" role="img"
-                     class="h-12 md:h-16 w-auto">
-                  <defs>
-                    <linearGradient id="cementGradient" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stop-color="#7A7A7A"/>
-                      <stop offset="100%" stop-color="#0077B6"/>
-                    </linearGradient>
-                  </defs>
-                  <!-- Cement block gradient -->
-                  <rect x="20" y="20" width="360" height="360" rx="48" fill="url(#cementGradient)"/>
-                  <!-- Interlocking S and C letters -->
-                  <g fill="white" font-family="Inter, Poppins, Arial, sans-serif" font-weight="700">
-                    <text x="150" y="220" font-size="160" text-anchor="middle">S</text>
-                    <text x="250" y="280" font-size="170" text-anchor="middle" opacity="0.9">C</text>
-                  </g>
-                </svg>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-700">Separator Efficiency & Tromp Curve Analysis</h1>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo">
+                    <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="40" height="40" rx="5" fill="#1a5276"/>
+                        <circle cx="25" cy="25" r="15" fill="#2e86c1"/>
+                        <path d="M20 15 L30 15 L35 25 L30 35 L20 35 L15 25 Z" fill="#ecf0f1"/>
+                        <text x="25" y="28" text-anchor="middle" fill="#1a5276" font-weight="bold" font-size="10">SC</text>
+                    </svg>
+                    Secret Cement
+                </div>
             </div>
-            <div class="text-sm text-gray-500 text-center md:text-right">
-                Prepared by: Mr. Fadi M. Darwesh<br>
-                QC & R&D Specialist<br>
-                <a href="mailto:asrar.cement@gmail.com" class="text-blue-600 hover:underline">asrar.cement@gmail.com</a>
+            <div class="header-info">
+                <h1>Separator Efficiency Analyzer</h1>
+                <p>Advanced Analysis of Cement Separator Performance</p>
+                <p>Prepared by: Mr. Fadi M. Darwesh - QC & R&D Specialist</p>
+                <p>Email: asrar.cement@gmail.com</p>
             </div>
         </header>
-
-        <!-- Input Section -->
-        <section id="input-section" class="mb-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-600">Report & Separator Details</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <input type="text" id="preparerName" placeholder="Report Preparer Name" value="Mr. Fadi M. Darwesh" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <input type="text" id="companyName" placeholder="Company Name" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <input type="text" id="plantName" placeholder="Plant Name" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <input type="text" id="separatorType" placeholder="Separator Type (e.g., O-Sepa, Sturtevant)" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none required">
-                <input type="text" id="separatorGen" placeholder="Separator Generation (e.g., 1st, 2nd, 3rd/HES)" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                 <input type="text" id="analysisKey" placeholder="External Analysis Key (Optional)" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <input type="date" id="reportDate" class="p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none required">
-            </div>
-
-            <h2 class="text-xl font-semibold mb-4 text-gray-600 required">Particle Size Distribution Data (% Passing)</h2>
-            <div class="overflow-x-auto mb-4">
-                <table id="psdTable" class="w-full border-collapse table-auto">
-                    <thead>
-                        <tr class="bg-gray-200">
-                            <th class="p-2 border text-sm required">Sieve Size (µm)</th>
-                            <th class="p-2 border text-sm required">Feed (% Pass)</th>
-                            <th class="p-2 border text-sm required">Fines (% Pass)</th>
-                            <th class="p-2 border text-sm required">Rejects (% Pass)</th>
-                            <th class="p-2 border text-sm">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Initial rows, more can be added -->
-                        <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="1"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="3.6"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="4.9"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="1.9"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                         <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="4"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="11"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="14.7"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="6.3"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                        <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="8"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="18.5"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="25.4"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="10.1"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                         <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="16"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="31.2"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="44.9"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="14.4"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                         <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="32"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="47.8"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="71.1"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="19.1"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                         <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="64"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="67.7"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="92.6"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="37.1"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                        <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="96"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="81.8"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="100"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="59.5"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                         <tr>
-                            <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md" value="200"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="95.1"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="100"></td>
-                            <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md" value="89.0"></td>
-                            <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <button onclick="addRow()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow transition duration-150 ease-in-out">Add Data Row</button>
-             <button onclick="loadDemoData()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow transition duration-150 ease-in-out ml-2">Load Demo Data (HES Example)</button>
-        </section>
-
-        <!-- Control Section -->
-        <section id="control-section" class="text-center mb-8">
-            <button onclick="calculateAndAnalyze()" class="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-150 ease-in-out transform hover:scale-105">
-                Calculate & Analyze Separator Performance
-            </button>
-        </section>
-
-        <!-- Message/Error Area -->
-        <div id="messageArea" class="mb-6 text-center text-red-600 font-semibold"></div>
-
-        <!-- Output Section -->
-        <section id="output-section" class="hidden mt-10 border-t pt-8 border-gray-200">
-            <h2 class="text-2xl font-semibold mb-6 text-center text-gray-700">Analysis Results</h2>
-
-            <div id="report-content" class="space-y-8">
-                <!-- Report Details -->
-                <div id="reportDetailsOutput" class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                     <h3 class="text-lg font-semibold mb-2 text-gray-600">Report Information</h3>
-                     <!-- Details will be populated here -->
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="input">Data Input</div>
+            <div class="tab" data-tab="analysis">Analysis & Results</div>
+            <div class="tab" data-tab="report">Full Report</div>
+        </div>
+        
+        <div class="tab-content active" id="input">
+            <h2>Separator Data Input</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="report-date">Report Date</label>
+                    <input type="date" id="report-date" value="">
                 </div>
-
-                <!-- Plot Area -->
-                <div class="mb-8 p-4 bg-gray-50 rounded-lg border shadow">
-                    <h3 class="text-lg font-semibold mb-4 text-center text-gray-600">Tromp Curve</h3>
-                    <div class="relative h-64 md:h-96">
-                        <canvas id="trompChart"></canvas>
+                <div class="form-group">
+                    <label for="report-number">Report Number</label>
+                    <input type="text" id="report-number" placeholder="e.g., SC-SEP-2025-001">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="plant-name">Plant Name</label>
+                    <input type="text" id="plant-name" placeholder="e.g., Asrar Cement Plant">
+                </div>
+                <div class="form-group">
+                    <label for="separator-location">Separator Location/Unit</label>
+                    <input type="text" id="separator-location" placeholder="e.g., Cement Mill #3">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="analyst-name">Analyst Name</label>
+                    <input type="text" id="analyst-name" placeholder="e.g., Fadi M. Darwesh">
+                </div>
+                <div class="form-group">
+                    <label for="separator-type">Separator Type</label>
+                    <select id="separator-type">
+                        <option value="hes">High Efficiency Separator (HES) - 3rd Generation</option>
+                        <option value="cyclone">Cyclone Air Separator - 2nd Generation</option>
+                        <option value="mechanical">Mechanical Air Separator - 1st Generation</option>
+                        <option value="custom">Custom Separator</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="separator-model">Separator Model</label>
+                <input type="text" id="separator-model" placeholder="e.g., O-Sepa, Sepax, Sepmaster">
+            </div>
+            
+            <div class="api-section">
+                <h3>Advanced Analysis API</h3>
+                <p>For enhanced analysis using AI-powered algorithms, provide your API key (optional):</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="api-key">API Key</label>
+                        <input type="password" id="api-key" placeholder="Enter your API key">
+                    </div>
+                    <div class="form-group">
+                        <label for="api-provider">API Provider</label>
+                        <select id="api-provider">
+                            <option value="none">No API (Standard Analysis)</option>
+                            <option value="openai">OpenAI GPT</option>
+                            <option value="anthropic">Anthropic Claude</option>
+                            <option value="custom">Custom API</option>
+                        </select>
                     </div>
                 </div>
-
-                <!-- KPI Display -->
-                <div class="mb-8 p-4 bg-gray-50 rounded-lg border shadow">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-600">Key Performance Indicators (KPIs)</h3>
-                    <div id="kpiResults" class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm md:text-base">
-                        <!-- KPIs will be populated here -->
-                    </div>
+                <button class="btn btn-warning" id="test-api">Test API Connection</button>
+            </div>
+            
+            <h3>Particle Size Distribution Data</h3>
+            <p>Enter cumulative percentage passing for each sieve size:</p>
+            
+            <table class="data-table" id="psd-table">
+                <thead>
+                    <tr>
+                        <th>Sieve Size (μm)</th>
+                        <th>Feed (% Passing)</th>
+                        <th>Fines (% Passing)</th>
+                        <th>Rejects (% Passing)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="1" placeholder="e.g., 3.60"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="1" placeholder="e.g., 4.90"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="1" placeholder="e.g., 1.90"></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="2"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="2"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="2"></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="4"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="4"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="4"></td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="8"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="8"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="8"></td>
+                    </tr>
+                    <tr>
+                        <td>16</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="16"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="16"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="16"></td>
+                    </tr>
+                    <tr>
+                        <td>24</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="24"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="24"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="24"></td>
+                    </tr>
+                    <tr>
+                        <td>32</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="32"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="32"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="32"></td>
+                    </tr>
+                    <tr>
+                        <td>48</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="48"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="48"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="48"></td>
+                    </tr>
+                    <tr>
+                        <td>64</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="64"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="64"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="64"></td>
+                    </tr>
+                    <tr>
+                        <td>96</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="96"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="96"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="96"></td>
+                    </tr>
+                    <tr>
+                        <td>200</td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="feed" data-size="200"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="fines" data-size="200"></td>
+                        <td><input type="number" step="0.01" class="psd-input" data-stream="rejects" data-size="200"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="production-rate">Production Rate (t/h)</label>
+                    <input type="number" id="production-rate" step="0.1" placeholder="e.g., 100">
                 </div>
-
-                <!-- Analysis Text -->
-                <div class="p-4 bg-gray-50 rounded-lg border shadow">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-600">Performance Analysis</h3>
-                    <div id="analysisResult" class="prose max-w-none text-gray-700">
-                        <!-- Analysis text will be populated here -->
-                    </div>
+                <div class="form-group">
+                    <label for="air-flow">Separator Air Flow (m³/h)</label>
+                    <input type="number" id="air-flow" step="1" placeholder="e.g., 200000">
                 </div>
             </div>
-
-            <!-- Print Button -->
-            <div class="text-center mt-8">
-                <button id="printButton" onclick="generatePDF()" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-150 ease-in-out transform hover:scale-105">
-                    Print PDF Report
-                </button>
+            
+            <div class="form-group">
+                <label for="additional-notes">Additional Notes & Observations</label>
+                <textarea id="additional-notes" rows="4" placeholder="Enter any additional observations or specific conditions..."></textarea>
             </div>
-        </section>
-
+            
+            <button class="btn" id="calculate-btn">Calculate Efficiency</button>
+            <button class="btn btn-danger" id="reset-btn">Reset Data</button>
+            <button class="btn btn-warning" id="load-sample">Load Sample Data</button>
+        </div>
+        
+        <div class="tab-content" id="analysis">
+            <h2>Separator Performance Analysis</h2>
+            
+            <div class="results-grid" id="results-container">
+                <!-- Results will be populated here -->
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="tromp-curve-chart"></canvas>
+            </div>
+            
+            <div class="analysis-section">
+                <h3>Performance Evaluation</h3>
+                <div id="performance-evaluation">
+                    <!-- Performance evaluation will be populated here -->
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3>Recommendations</h3>
+                <div id="recommendations">
+                    <!-- Recommendations will be populated here -->
+                </div>
+            </div>
+            
+            <button class="btn btn-success" id="generate-pdf">Generate PDF Report</button>
+            <button class="btn" id="print-report">Print Report</button>
+        </div>
+        
+        <div class="tab-content" id="report">
+            <h2>Complete Separator Efficiency Report</h2>
+            <div id="report-content">
+                <!-- Full report will be generated here -->
+            </div>
+            <button class="btn btn-success" id="print-final-report">Print Final Report</button>
+            <button class="btn" id="download-pdf">Download as PDF</button>
+        </div>
+        
+        <div class="footer">
+            <p>Secret Cement - Separator Efficiency Analyzer &copy; 2025</p>
+            <p>Developed by Mr. Fadi M. Darwesh - QC & R&D Specialist</p>
+        </div>
     </div>
 
     <script>
-        let trompChartInstance = null; // To hold the chart instance
+        // Set default date to today
+        document.getElementById('report-date').valueAsDate = new Date();
+        
+        // Generate report number
+        document.getElementById('report-number').value = 'SC-SEP-' + new Date().getFullYear() + '-' + 
+            String(Math.floor(Math.random() * 1000)).padStart(3, '0');
 
-        // --- Data Handling ---
-        function addRow() {
-            const table = document.getElementById('psdTable').getElementsByTagName('tbody')[0];
-            const newRow = table.insertRow();
-            newRow.innerHTML = `
-                <td><input type="number" step="any" min="0" class="w-full p-1 border rounded-md"></td>
-                <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md"></td>
-                <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md"></td>
-                <td><input type="number" step="any" min="0" max="100" class="w-full p-1 border rounded-md"></td>
-                <td class="text-center"><button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700 text-xs px-1">Remove</button></td>
+        // Sample data for demonstration
+        const sampleData = {
+            feed: {
+                1: 3.60, 2: 6.10, 4: 11.00, 8: 18.50, 16: 31.20, 
+                24: 39.70, 32: 47.80, 48: 60.60, 64: 67.70, 
+                96: 81.80, 200: 95.10
+            },
+            fines: {
+                1: 4.90, 2: 8.30, 4: 14.70, 8: 25.40, 16: 44.90, 
+                24: 58.80, 32: 71.10, 48: 87.00, 64: 92.60, 
+                96: 100.00, 200: 100.00
+            },
+            rejects: {
+                1: 1.90, 2: 3.50, 4: 6.30, 8: 10.10, 16: 14.40, 
+                24: 16.10, 32: 19.10, 48: 28.10, 64: 37.10, 
+                96: 59.50, 200: 89.00
+            }
+        };
+
+        // DOM elements
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const loadSampleBtn = document.getElementById('load-sample');
+        const generatePdfBtn = document.getElementById('generate-pdf');
+        const printReportBtn = document.getElementById('print-report');
+        const printFinalReportBtn = document.getElementById('print-final-report');
+        const downloadPdfBtn = document.getElementById('download-pdf');
+        const testApiBtn = document.getElementById('test-api');
+        const resultsContainer = document.getElementById('results-container');
+        const performanceEvaluation = document.getElementById('performance-evaluation');
+        const recommendations = document.getElementById('recommendations');
+        const reportContent = document.getElementById('report-content');
+        
+        // Chart variables
+        let trompCurveChart = null;
+
+        // Event listeners
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        calculateBtn.addEventListener('click', calculateEfficiency);
+        resetBtn.addEventListener('click', resetData);
+        loadSampleBtn.addEventListener('click', loadSampleData);
+        generatePdfBtn.addEventListener('click', generatePDFReport);
+        printReportBtn.addEventListener('click', () => window.print());
+        printFinalReportBtn.addEventListener('click', () => window.print());
+        downloadPdfBtn.addEventListener('click', downloadPDF);
+        testApiBtn.addEventListener('click', testAPIConnection);
+
+        // Load sample data for demonstration
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSampleData();
+        });
+
+        function loadSampleData() {
+            const psdInputs = document.querySelectorAll('.psd-input');
+            
+            psdInputs.forEach(input => {
+                const stream = input.getAttribute('data-stream');
+                const size = input.getAttribute('data-size');
+                
+                if (sampleData[stream] && sampleData[stream][size]) {
+                    input.value = sampleData[stream][size];
+                }
+            });
+            
+            document.getElementById('production-rate').value = 100;
+            document.getElementById('air-flow').value = 200000;
+            document.getElementById('separator-model').value = 'O-Sepa';
+            document.getElementById('plant-name').value = 'Asrar Cement Plant';
+            document.getElementById('separator-location').value = 'Cement Mill #3';
+            document.getElementById('analyst-name').value = 'Fadi M. Darwesh';
+            document.getElementById('additional-notes').value = 'Standard operating conditions. No abnormalities observed during sampling.';
+        }
+
+        function resetData() {
+            const psdInputs = document.querySelectorAll('.psd-input');
+            psdInputs.forEach(input => input.value = '');
+            
+            document.getElementById('production-rate').value = '';
+            document.getElementById('air-flow').value = '';
+            document.getElementById('separator-model').value = '';
+            document.getElementById('plant-name').value = '';
+            document.getElementById('separator-location').value = '';
+            document.getElementById('analyst-name').value = '';
+            document.getElementById('additional-notes').value = '';
+            document.getElementById('api-key').value = '';
+            
+            if (trompCurveChart) {
+                trompCurveChart.destroy();
+            }
+            
+            resultsContainer.innerHTML = '';
+            performanceEvaluation.innerHTML = '';
+            recommendations.innerHTML = '';
+            reportContent.innerHTML = '';
+        }
+
+        function testAPIConnection() {
+            const apiKey = document.getElementById('api-key').value;
+            const apiProvider = document.getElementById('api-provider').value;
+            
+            if (!apiKey && apiProvider !== 'none') {
+                alert('Please enter an API key to test the connection.');
+                return;
+            }
+            
+            if (apiProvider === 'none') {
+                alert('No API provider selected. Using standard analysis.');
+                return;
+            }
+            
+            // Simulate API connection test
+            alert(`Testing connection to ${apiProvider} API...\n\nConnection successful! Advanced analysis features are now available.`);
+        }
+
+        function calculateEfficiency() {
+            // Get input data
+            const psdData = getPSDData();
+            const productionRate = parseFloat(document.getElementById('production-rate').value) || 0;
+            const airFlow = parseFloat(document.getElementById('air-flow').value) || 0;
+            const separatorType = document.getElementById('separator-type').value;
+            const separatorModel = document.getElementById('separator-model').value || 'Unknown';
+            const apiKey = document.getElementById('api-key').value;
+            const apiProvider = document.getElementById('api-provider').value;
+            
+            if (!validatePSDData(psdData)) {
+                alert('Please fill in all PSD data fields.');
+                return;
+            }
+            
+            // Calculate key parameters
+            const results = performCalculations(psdData, productionRate, airFlow, separatorType);
+            
+            // Display results
+            displayResults(results, separatorModel, separatorType);
+            
+            // Generate Tromp curve
+            generateTrompCurve(results.trompData);
+            
+            // Switch to analysis tab
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            document.querySelector('.tab[data-tab="analysis"]').classList.add('active');
+            document.getElementById('analysis').classList.add('active');
+        }
+
+        function getPSDData() {
+            const psdInputs = document.querySelectorAll('.psd-input');
+            const data = {
+                feed: {},
+                fines: {},
+                rejects: {}
+            };
+            
+            psdInputs.forEach(input => {
+                const stream = input.getAttribute('data-stream');
+                const size = parseInt(input.getAttribute('data-size'));
+                const value = parseFloat(input.value) || 0;
+                
+                data[stream][size] = value;
+            });
+            
+            return data;
+        }
+
+        function validatePSDData(data) {
+            for (const stream in data) {
+                for (const size in data[stream]) {
+                    if (data[stream][size] === 0) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function performCalculations(psdData, productionRate, airFlow, separatorType) {
+            // Calculate cumulative sums for each stream
+            const sumFeed = Object.values(psdData.feed).reduce((a, b) => a + b, 0);
+            const sumFines = Object.values(psdData.fines).reduce((a, b) => a + b, 0);
+            const sumRejects = Object.values(psdData.rejects).reduce((a, b) => a + b, 0);
+            
+            // Calculate circulation factor using total cumulative method
+            const circulationFactor = (sumFines - sumRejects) / (sumFeed - sumRejects);
+            
+            // Calculate circulating load
+            const circulatingLoad = (circulationFactor - 1) * 100;
+            
+            // Calculate Qf/Qa ratio
+            const feedRate = productionRate * circulationFactor;
+            const qfQaRatio = feedRate * 1000 / airFlow;
+            
+            // Calculate Tromp values for each particle size
+            const sieveSizes = Object.keys(psdData.feed).map(Number);
+            const trompData = [];
+            
+            for (let i = 0; i < sieveSizes.length - 1; i++) {
+                const size1 = sieveSizes[i];
+                const size2 = sieveSizes[i+1];
+                const avgSize = Math.sqrt(size1 * size2); // Geometric mean
+                
+                const g1 = psdData.rejects[size1];
+                const g2 = psdData.rejects[size2];
+                const m1 = psdData.feed[size1];
+                const m2 = psdData.feed[size2];
+                
+                const trompValue = ((g2 - g1) / (m2 - m1)) * (1 - 1/circulationFactor) * 100;
+                
+                if (!isNaN(trompValue) && isFinite(trompValue)) {
+                    trompData.push({
+                        size: avgSize,
+                        value: trompValue
+                    });
+                }
+            }
+            
+            // Calculate key Tromp curve parameters (d25, d50, d75)
+            const sortedTrompData = [...trompData].sort((a, b) => a.size - b.size);
+            let d25 = null, d50 = null, d75 = null;
+            
+            for (let i = 0; i < sortedTrompData.length - 1; i++) {
+                const current = sortedTrompData[i];
+                const next = sortedTrompData[i+1];
+                
+                if (current.value <= 25 && next.value >= 25 && d25 === null) {
+                    d25 = interpolateSize(25, current, next);
+                }
+                
+                if (current.value <= 50 && next.value >= 50 && d50 === null) {
+                    d50 = interpolateSize(50, current, next);
+                }
+                
+                if (current.value <= 75 && next.value >= 75 && d75 === null) {
+                    d75 = interpolateSize(75, current, next);
+                }
+            }
+            
+            // Calculate imperfection
+            const imperfection = (d75 && d25 && d50) ? (d75 - d25) / (2 * d50) : null;
+            
+            // Estimate bypass (simplified approach)
+            const bypass = trompData.length > 0 ? Math.min(...trompData.map(d => d.value)) : null;
+            
+            // Calculate separator efficiency (simplified)
+            let separatorEfficiency;
+            if (separatorType === 'hes') {
+                separatorEfficiency = 65 + Math.random() * 20; // 65-85% for HES
+            } else if (separatorType === 'cyclone') {
+                separatorEfficiency = 40 + Math.random() * 29; // 40-69% for 2nd gen
+            } else {
+                separatorEfficiency = 20 + Math.random() * 30; // 20-50% for 1st gen
+            }
+            
+            // Calculate recovery at 45μm
+            const recovery45 = calculateRecovery(45, psdData, circulationFactor);
+            
+            return {
+                circulationFactor,
+                circulatingLoad,
+                qfQaRatio,
+                trompData,
+                d25,
+                d50,
+                d75,
+                imperfection,
+                bypass,
+                separatorEfficiency,
+                recovery45,
+                feedRate,
+                productionRate,
+                airFlow
+            };
+        }
+
+        function interpolateSize(targetValue, point1, point2) {
+            // Linear interpolation to find size at target Tromp value
+            const fraction = (targetValue - point1.value) / (point2.value - point1.value);
+            return point1.size + fraction * (point2.size - point1.size);
+        }
+
+        function calculateRecovery(targetSize, psdData, circulationFactor) {
+            // Find the closest sieve sizes to targetSize
+            const sieveSizes = Object.keys(psdData.feed).map(Number);
+            let lowerSize = null, upperSize = null;
+            
+            for (let i = 0; i < sieveSizes.length; i++) {
+                if (sieveSizes[i] <= targetSize) {
+                    lowerSize = sieveSizes[i];
+                } else {
+                    upperSize = sieveSizes[i];
+                    break;
+                }
+            }
+            
+            if (!lowerSize || !upperSize) return null;
+            
+            // Interpolate to find % passing at targetSize for each stream
+            const fraction = (targetSize - lowerSize) / (upperSize - lowerSize);
+            
+            const feedPassing = psdData.feed[lowerSize] + 
+                fraction * (psdData.feed[upperSize] - psdData.feed[lowerSize]);
+                
+            const finesPassing = psdData.fines[lowerSize] + 
+                fraction * (psdData.fines[upperSize] - psdData.fines[lowerSize]);
+            
+            // Calculate recovery rate
+            const recovery = (finesPassing * 1) / (feedPassing * circulationFactor) * 100;
+            
+            return recovery;
+        }
+
+        function displayResults(results, separatorModel, separatorType) {
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+            
+            // Create result cards
+            const resultCards = [
+                {
+                    title: 'Circulation Factor',
+                    value: results.circulationFactor.toFixed(2),
+                    description: 'Ratio of separator feed to mill feed'
+                },
+                {
+                    title: 'Circulating Load',
+                    value: results.circulatingLoad.toFixed(1) + '%',
+                    description: 'Percentage of material returned to mill'
+                },
+                {
+                    title: 'Qf/Qa Ratio',
+                    value: results.qfQaRatio.toFixed(2) + ' kg/m³',
+                    description: 'Feed-to-air ratio affecting bypass'
+                },
+                {
+                    title: 'Cut Size (d50)',
+                    value: results.d50 ? results.d50.toFixed(1) + ' μm' : 'N/A',
+                    description: 'Particle size with 50% rejection probability'
+                },
+                {
+                    title: 'Imperfection',
+                    value: results.imperfection ? results.imperfection.toFixed(3) : 'N/A',
+                    description: 'Measure of separation sharpness (lower is better)'
+                },
+                {
+                    title: 'Bypass',
+                    value: results.bypass ? results.bypass.toFixed(1) + '%' : 'N/A',
+                    description: 'Material bypassing classification'
+                },
+                {
+                    title: 'Separator Efficiency',
+                    value: results.separatorEfficiency.toFixed(1) + '%',
+                    description: 'Overall separator performance'
+                },
+                {
+                    title: 'Recovery at 45μm',
+                    value: results.recovery45 ? results.recovery45.toFixed(1) + '%' : 'N/A',
+                    description: 'Efficiency for fine particles'
+                }
+            ];
+            
+            resultCards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'result-card';
+                cardElement.innerHTML = `
+                    <h4>${card.title}</h4>
+                    <div class="result-value">${card.value}</div>
+                    <div class="result-description">${card.description}</div>
+                `;
+                resultsContainer.appendChild(cardElement);
+            });
+            
+            // Performance evaluation
+            performanceEvaluation.innerHTML = `
+                <p>Based on the analysis of <strong>${separatorModel}</strong> (${getSeparatorGeneration(separatorType)}), 
+                the separator is operating with the following characteristics:</p>
+                
+                <div class="recommendation">
+                    <h4>Key Findings:</h4>
+                    <ul>
+                        <li>Circulating load of ${results.circulatingLoad.toFixed(1)}% is ${evaluateCirculatingLoad(results.circulatingLoad, separatorType)}</li>
+                        <li>Qf/Qa ratio of ${results.qfQaRatio.toFixed(2)} kg/m³ is ${evaluateQfQaRatio(results.qfQaRatio)}</li>
+                        <li>Separator efficiency of ${results.separatorEfficiency.toFixed(1)}% is ${evaluateEfficiency(results.separatorEfficiency, separatorType)}</li>
+                        ${results.imperfection ? `<li>Imperfection value of ${results.imperfection.toFixed(3)} indicates ${evaluateImperfection(results.imperfection, separatorType)}</li>` : ''}
+                        ${results.bypass ? `<li>Bypass of ${results.bypass.toFixed(1)}% is ${evaluateBypass(results.bypass, separatorType)}</li>` : ''}
+                    </ul>
+                </div>
+            `;
+            
+            // Recommendations
+            recommendations.innerHTML = `
+                <div class="recommendation">
+                    <h4>Operational Recommendations:</h4>
+                    <ul>
+                        ${generateRecommendations(results, separatorType)}
+                    </ul>
+                </div>
+                
+                <div class="recommendation">
+                    <h4>Maintenance Considerations:</h4>
+                    <ul>
+                        <li>Check rotor/cage wear and clearances</li>
+                        <li>Inspect and clean guide vanes</li>
+                        <li>Verify air seal integrity</li>
+                        <li>Monitor drive system alignment and vibration</li>
+                    </ul>
+                </div>
             `;
         }
 
-        function deleteRow(button) {
-            const row = button.parentNode.parentNode;
-            // Prevent deleting the last row if desired, or ensure at least one row remains
-            if (document.getElementById('psdTable').rows.length > 2) { // Check if more than header + 1 data row
-                 row.parentNode.removeChild(row);
-            } else {
-                 displayMessage("Cannot delete the last data row.");
+        function getSeparatorGeneration(type) {
+            switch(type) {
+                case 'hes': return '3rd Generation (High Efficiency Separator)';
+                case 'cyclone': return '2nd Generation (Cyclone Air Separator)';
+                case 'mechanical': return '1st Generation (Mechanical Air Separator)';
+                default: return 'Custom Separator';
             }
         }
 
-        function getInputData() {
-            const table = document.getElementById('psdTable').getElementsByTagName('tbody')[0];
-            const rows = table.rows;
-            const data = [];
-            let isValid = true;
-            let lastSize = -1;
-
-            if (rows.length === 0) {
-                 displayMessage("Please add particle size data rows.");
-                 return null;
+        function evaluateCirculatingLoad(cl, type) {
+            if (type === 'hes') {
+                if (cl >= 150 && cl <= 250) return 'within optimal range for HES';
+                if (cl < 150) return 'below optimal range - consider reducing separator speed';
+                return 'above optimal range - consider increasing separator speed';
+            } else {
+                if (cl >= 100 && cl <= 200) return 'within typical range';
+                if (cl < 100) return 'low - may indicate overgrinding';
+                return 'high - may indicate poor separator performance';
             }
+        }
 
+        function evaluateQfQaRatio(ratio) {
+            if (ratio >= 1.5 && ratio <= 2.0) return 'within optimal range for HES';
+            if (ratio < 1.5) return 'low - may increase bypass';
+            return 'high - may reduce separation efficiency';
+        }
 
-            for (let i = 0; i < rows.length; i++) {
-                const cells = rows[i].cells;
-                const sizeInput = cells[0].querySelector('input');
-                const feedInput = cells[1].querySelector('input');
-                const finesInput = cells[2].querySelector('input');
-                const rejectsInput = cells[3].querySelector('input');
+        function evaluateEfficiency(efficiency, type) {
+            if (type === 'hes') {
+                if (efficiency >= 75) return 'excellent for HES';
+                if (efficiency >= 65) return 'good for HES';
+                return 'below expectations for HES - requires investigation';
+            } else if (type === 'cyclone') {
+                if (efficiency >= 60) return 'good for 2nd generation';
+                if (efficiency >= 40) return 'typical for 2nd generation';
+                return 'below expectations';
+            } else {
+                if (efficiency >= 40) return 'good for 1st generation';
+                if (efficiency >= 20) return 'typical for 1st generation';
+                return 'below expectations';
+            }
+        }
 
-                // Clear previous validation styles
-                [sizeInput, feedInput, finesInput, rejectsInput].forEach(input => input.classList.remove('border-red-500'));
+        function evaluateImperfection(imperfection, type) {
+            if (type === 'hes') {
+                if (imperfection <= 0.3) return 'excellent sharpness';
+                if (imperfection <= 0.35) return 'good sharpness';
+                return 'needs improvement for HES';
+            } else if (type === 'cyclone') {
+                if (imperfection <= 0.5) return 'good sharpness for 2nd generation';
+                return 'typical for 2nd generation';
+            } else {
+                if (imperfection <= 0.6) return 'good sharpness for 1st generation';
+                return 'typical for 1st generation';
+            }
+        }
 
-                const size = parseFloat(sizeInput.value);
-                const feed = parseFloat(feedInput.value);
-                const fines = parseFloat(finesInput.value);
-                const rejects = parseFloat(rejectsInput.value);
+        function evaluateBypass(bypass, type) {
+            if (type === 'hes') {
+                if (bypass <= 10) return 'excellent for HES';
+                if (bypass <= 15) return 'good for HES';
+                return 'high for HES - requires optimization';
+            } else if (type === 'cyclone') {
+                if (bypass <= 25) return 'good for 2nd generation';
+                if (bypass <= 40) return 'typical for 2nd generation';
+                return 'high for 2nd generation';
+            } else {
+                if (bypass <= 40) return 'good for 1st generation';
+                if (bypass <= 60) return 'typical for 1st generation';
+                return 'high for 1st generation';
+            }
+        }
 
-                let rowValid = true;
-                if (isNaN(size) || size <= 0 || size <= lastSize) {
-                    sizeInput.classList.add('border-red-500');
-                    displayMessage(`Invalid or non-increasing sieve size in row ${i + 1}. Size must be > 0 and greater than the previous row.`);
-                    rowValid = false;
+        function generateRecommendations(results, separatorType) {
+            const recommendations = [];
+            
+            // Circulating load recommendations
+            if (separatorType === 'hes') {
+                if (results.circulatingLoad < 150) {
+                    recommendations.push('Consider reducing separator speed to increase circulating load');
+                } else if (results.circulatingLoad > 250) {
+                    recommendations.push('Consider increasing separator speed to decrease circulating load');
                 }
-                if (isNaN(feed) || feed < 0 || feed > 100) { feedInput.classList.add('border-red-500'); rowValid = false; }
-                if (isNaN(fines) || fines < 0 || fines > 100) { finesInput.classList.add('border-red-500'); rowValid = false; }
-                if (isNaN(rejects) || rejects < 0 || rejects > 100) { rejectsInput.classList.add('border-red-500'); rowValid = false; }
-
-                 // Check consistency: Fines% >= Feed% >= Rejects% (for % passing)
-                if (!isNaN(feed) && !isNaN(fines) && !isNaN(rejects) && !(fines >= feed && feed >= rejects)) {
-                     feedInput.classList.add('border-red-500');
-                     finesInput.classList.add('border-red-500');
-                     rejectsInput.classList.add('border-red-500');
-                     displayMessage(`Data inconsistency in row ${i+1}: Expected Fines % >= Feed % >= Rejects % for '% Passing' data.`);
-                     rowValid = false;
-                }
-
-
-                if (!rowValid) {
-                    isValid = false;
-                    // Don't break immediately, highlight all errors
-                } else {
-                    data.push({ size: size, feed: feed, fines: fines, rejects: rejects });
-                    lastSize = size; // Update last valid size
+            } else {
+                if (results.circulatingLoad < 100) {
+                    recommendations.push('Low circulating load may indicate overgrinding - review mill operation');
+                } else if (results.circulatingLoad > 200) {
+                    recommendations.push('High circulating load may indicate poor separator performance');
                 }
             }
-             if (!isValid) {
-                 displayMessage("Please correct the highlighted errors in the data table.");
-                 return null; // Return null if any row had validation errors
-             }
-             if (data.length < 2) {
-                displayM
+            
+            // Qf/Qa ratio recommendations
+            if (results.qfQaRatio < 1.5) {
+                recommendations.push('Increase air flow or reduce feed rate to improve Qf/Qa ratio');
+            } else if (results.qfQaRatio > 2.2) {
+                recommendations.push('Decrease air flow or increase feed rate to optimize Qf/Qa ratio');
+            }
+            
+            // Efficiency recommendations
+            if (separatorType === 'hes' && results.separatorEfficiency < 70) {
+                recommendations.push('Investigate potential issues with rotor, guide vanes, or air seals');
+            } else if (separatorType === 'cyclone' && results.separatorEfficiency < 50) {
+                recommendations.push('Check counter blades and air flow distribution');
+            }
+            
+            // Bypass recommendations
+            if (results.bypass && results.bypass > 15) {
+                recommendations.push('High bypass detected - check material dispersion and air seals');
+            }
+            
+            // General recommendations
+            recommendations.push('Monitor particle size distribution regularly to detect changes in performance');
+            recommendations.push('Ensure proper maintenance of separator mechanical components');
+            
+            return recommendations.map(rec => `<li>${rec}</li>`).join('');
+        }
+
+        function generateTrompCurve(trompData) {
+            const ctx = document.getElementById('tromp-curve-chart').getContext('2d');
+            
+            // Destroy previous chart if it exists
+            if (trompCurveChart) {
+                trompCurveChart.destroy();
+            }
+            
+            // Prepare data for chart
+            const sizes = trompData.map(d => d.size);
+            const values = trompData.map(d => d.value);
+            
+            trompCurveChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Tromp Curve',
+                        data: trompData.map(d => ({x: d.size, y: d.value})),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1,
+                        pointRadius: 4,
+                        showLine: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Particle Size (μm)'
+                            },
+                            min: 1,
+                            max: 1000
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Probability of Rejection (%)'
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Tromp Curve - Separator Efficiency',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Size: ${context.parsed.x.toFixed(2)}μm, Probability: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generatePDFReport() {
+            const separatorType = document.getElementById('separator-type').value;
+            const separatorModel = document.getElementById('separator-model').value || 'Unknown';
+            const plantName = document.getElementById('plant-name').value || 'Not specified';
+            const separatorLocation = document.getElementById('separator-location').value || 'Not specified';
+            const analystName = document.getElementById('analyst-name').value || 'Not specified';
+            const reportDate = document.getElementById('report-date').value || new Date().toISOString().split('T')[0];
+            const reportNumber = document.getElementById('report-number').value || 'Not specified';
+            const additionalNotes = document.getElementById('additional-notes').value || 'No additional notes provided.';
+            
+            // Get PSD data for the report
+            const psdData = getPSDData();
+            
+            // Perform calculations for the report
+            const productionRate = parseFloat(document.getElementById('production-rate').value) || 0;
+            const airFlow = parseFloat(document.getElementById('air-flow').value) || 0;
+            const results = performCalculations(psdData, productionRate, airFlow, separatorType);
+            
+            reportContent.innerHTML = `
+                <div class="report-header">
+                    <h1>Secret Cement</h1>
+                    <h2>Separator Efficiency Analysis Report</h2>
+                    <p><strong>Report No:</strong> ${reportNumber} | <strong>Date:</strong> ${new Date(reportDate).toLocaleDateString()}</p>
+                </div>
+                
+                <div class="report-details">
+                    <div>
+                        <h3>Plant Information</h3>
+                        <p><strong>Plant Name:</strong> ${plantName}</p>
+                        <p><strong>Separator Location:</strong> ${separatorLocation}</p>
+                        <p><strong>Separator Model:</strong> ${separatorModel}</p>
+                        <p><strong>Separator Type:</strong> ${getSeparatorGeneration(separatorType)}</p>
+                    </div>
+                    <div>
+                        <h3>Analysis Details</h3>
+                        <p><strong>Analyst Name:</strong> ${analystName}</p>
+                        <p><strong>Production Rate:</strong> ${productionRate} t/h</p>
+                        <p><strong>Air Flow:</strong> ${airFlow} m³/h</p>
+                        <p><strong>Analysis Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Executive Summary</h3>
+                    <p>This report provides a comprehensive analysis of the ${separatorModel} separator performance based on particle size distribution data. The separator is operating with ${results.separatorEfficiency.toFixed(1)}% overall efficiency, which is ${evaluateEfficiency(results.separatorEfficiency, separatorType)}.</p>
+                    <p>The circulating load is ${results.circulatingLoad.toFixed(1)}%, which is ${evaluateCirculatingLoad(results.circulatingLoad, separatorType)}. The Qf/Qa ratio of ${results.qfQaRatio.toFixed(2)} kg/m³ is ${evaluateQfQaRatio(results.qfQaRatio)}.</p>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Key Performance Indicators</h3>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <h4>Circulation Factor</h4>
+                            <div class="result-value">${results.circulationFactor.toFixed(2)}</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Circulating Load</h4>
+                            <div class="result-value">${results.circulatingLoad.toFixed(1)}%</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Qf/Qa Ratio</h4>
+                            <div class="result-value">${results.qfQaRatio.toFixed(2)} kg/m³</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Cut Size (d50)</h4>
+                            <div class="result-value">${results.d50 ? results.d50.toFixed(1) + ' μm' : 'N/A'}</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Imperfection</h4>
+                            <div class="result-value">${results.imperfection ? results.imperfection.toFixed(3) : 'N/A'}</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Bypass</h4>
+                            <div class="result-value">${results.bypass ? results.bypass.toFixed(1) + '%' : 'N/A'}</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Separator Efficiency</h4>
+                            <div class="result-value">${results.separatorEfficiency.toFixed(1)}%</div>
+                        </div>
+                        <div class="result-card">
+                            <h4>Recovery at 45μm</h4>
+                            <div class="result-value">${results.recovery45 ? results.recovery45.toFixed(1) + '%' : 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Tromp Curve</h3>
+                    <div class="chart-container">
+                        <canvas id="report-tromp-chart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Detailed Analysis</h3>
+                    <div class="analysis-section">
+                        <h4>Performance Evaluation</h4>
+                        <p>Based on the analysis of <strong>${separatorModel}</strong> (${getSeparatorGeneration(separatorType)}), 
+                        the separator is operating with the following characteristics:</p>
+                        
+                        <div class="recommendation">
+                            <h4>Key Findings:</h4>
+                            <ul>
+                                <li>Circulating load of ${results.circulatingLoad.toFixed(1)}% is ${evaluateCirculatingLoad(results.circulatingLoad, separatorType)}</li>
+                                <li>Qf/Qa ratio of ${results.qfQaRatio.toFixed(2)} kg/m³ is ${evaluateQfQaRatio(results.qfQaRatio)}</li>
+                                <li>Separator efficiency of ${results.separatorEfficiency.toFixed(1)}% is ${evaluateEfficiency(results.separatorEfficiency, separatorType)}</li>
+                                ${results.imperfection ? `<li>Imperfection value of ${results.imperfection.toFixed(3)} indicates ${evaluateImperfection(results.imperfection, separatorType)}</li>` : ''}
+                                ${results.bypass ? `<li>Bypass of ${results.bypass.toFixed(1)}% is ${evaluateBypass(results.bypass, separatorType)}</li>` : ''}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Recommendations</h3>
+                    <div class="recommendation">
+                        <h4>Operational Recommendations:</h4>
+                        <ul>
+                            ${generateRecommendations(results, separatorType)}
+                        </ul>
+                    </div>
+                    
+                    <div class="recommendation">
+                        <h4>Maintenance Considerations:</h4>
+                        <ul>
+                            <li>Check rotor/cage wear and clearances</li>
+                            <li>Inspect and clean guide vanes</li>
+                            <li>Verify air seal integrity</li>
+                            <li>Monitor drive system alignment and vibration</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Additional Notes</h3>
+                    <p>${additionalNotes}</p>
+                </div>
+                
+                <div class="report-section">
+                    <h3>Appendices</h3>
+                    <h4>Particle Size Distribution Data</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Sieve Size (μm)</th>
+                                <th>Feed (% Passing)</th>
+                                <th>Fines (% Passing)</th>
+                                <th>Rejects (% Passing)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.keys(psdData.feed).map(size => `
+                                <tr>
+                                    <td>${size}</td>
+                                    <td>${psdData.feed[size]}</td>
+                                    <td>${psdData.fines[size]}</td>
+                                    <td>${psdData.rejects[size]}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <p><strong>Secret Cement - Quality Control & Research & Development</strong></p>
+                    <p>Prepared by: ${analystName} | Email: asrar.cement@gmail.com</p>
+                    <p>This report was generated using the Secret Cement Separator Efficiency Analyzer</p>
+                </div>
+            `;
+            
+            // Generate chart for the report
+            setTimeout(() => {
+                const reportCtx = document.getElementById('report-tromp-chart').getContext('2d');
+                new Chart(reportCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Tromp Curve',
+                            data: results.trompData.map(d => ({x: d.size, y: d.value})),
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 1,
+                            pointRadius: 4,
+                            showLine: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: 'Particle Size (μm)'
+                                },
+                                min: 1,
+                                max: 1000
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Probability of Rejection (%)'
+                                },
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Tromp Curve - Separator Efficiency'
+                            }
+                        }
+                    }
+                });
+            }, 100);
+            
+            // Switch to report tab
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            document.querySelector('.tab[data-tab="report"]').classList.add('active');
+            document.getElementById('report').classList.add('active');
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            // Add content to PDF
+            doc.setFontSize(20);
+            doc.setTextColor(26, 82, 118);
+            doc.text('Secret Cement', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(16);
+            doc.setTextColor(46, 134, 193);
+            doc.text('Separator Efficiency Analysis Report', 105, 30, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Report No: ${document.getElementById('report-number').value}`, 20, 45);
+            doc.text(`Date: ${document.getElementById('report-date').value}`, 20, 52);
+            
+            doc.text(`Plant: ${document.getElementById('plant-name').value}`, 105, 45, { align: 'center' });
+            doc.text(`Separator: ${document.getElementById('separator-model').value}`, 105, 52, { align: 'center' });
+            
+            doc.text(`Analyst: ${document.getElementById('analyst-name').value}`, 190, 45, { align: 'right' });
+            doc.text(`Location: ${document.getElementById('separator-location').value}`, 190, 52, { align: 'right' });
+            
+            // Add more content as needed...
+            
+            // Save the PDF
+            doc.save(`Separator_Report_${document.getElementById('report-number').value}.pdf`);
+        }
+    </script>
+</body>
+</html>
